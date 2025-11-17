@@ -1,9 +1,11 @@
 #pragma once
 #include <thread>
 #include <vector>
-#define MFENCE() asm volatile("mfence" ::: "memory")
+// #define MFENCE() asm volatile("mfence" ::: "memory")
+// #define LFENCE() asm volatile("lfence" ::: "memory")
+// #define SFENCE() asm volatile("sfence" ::: "memory")
 //#define MFENCE() { __asm__("mfence" ::: "memory"); }
-//#define MEMORY_BARRIER() __sync_synchronize()
+#define LFENCE() __sync_synchronize()
 
 static constexpr long long NUM_THREADS = 10;
 
@@ -29,8 +31,9 @@ private:
 inline void l_mutex::lock(int thread_id)
 {
     m_choosing[thread_id] = true;
-    MFENCE();
+    //MFENCE();
     //MEMORY_BARRIER();
+    LFENCE();
     int max_num = 0;
 
     for (unsigned int i = 0; i < m_amount_of_threads; ++i)
@@ -40,11 +43,13 @@ inline void l_mutex::lock(int thread_id)
 
 
     m_number[thread_id] = max_num + 1;
-    MFENCE();
+    //MFENCE();
     //MEMORY_BARRIER();
+    LFENCE();
     m_choosing[thread_id] = false;
     //MEMORY_BARRIER();
-    MFENCE();
+    //MFENCE();
+    LFENCE();
     for (int j = 0; j < m_amount_of_threads; ++j)
     {
         if (j == thread_id) continue;
@@ -60,6 +65,7 @@ inline void l_mutex::lock(int thread_id)
 inline void l_mutex::unlock(int thread_id)
 {
     m_number[thread_id] = 0;
-    MFENCE();
+    //MFENCE();
     //MEMORY_BARRIER();
+    LFENCE();
 }

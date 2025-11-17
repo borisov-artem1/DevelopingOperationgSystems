@@ -1,6 +1,8 @@
 #pragma once
 #include <thread>
 #define MFENCE() asm volatile("mfence" ::: "memory")
+#define LFENCE() asm volatile("lfence" ::: "memory")
+#define SFENCE() asm volatile("sfence" ::: "memory")
 
 
 
@@ -20,7 +22,8 @@ inline void p_mutex::lock(int thread)
     int other = 1 - thread;
     interested[thread] = true;
     turn = thread;
-    MFENCE();
+    //MFENCE();
+    LFENCE();
     while (turn == thread && interested[other]);
 }
 
