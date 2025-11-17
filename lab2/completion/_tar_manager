@@ -1,0 +1,61 @@
+#compdef tar_manager
+
+# shellcheck disable=SC2168
+local curcontext="$curcontext" state line
+typeset -A opt_args
+
+_arguments -C \
+    '1: :->archive' \
+    '2: :->command' \
+    '3: :->path' \
+    '*: :->extra'
+
+case $state in
+    archive)
+        _files -g "*.tar"
+        ;;
+    command)
+        local commands=(
+            'tree:Show directory tree'
+            'cat:Show file content'
+            'extract:Extract file from archive'
+            'info:Show archive info'
+        )
+        _describe 'command' commands
+        ;;
+    path)
+        local archive="${words[2]}"
+        local command="${words[3]}"
+
+        if [[ -f "$archive" ]]; then
+            case $command in
+                cat|extract)
+                    # Получаем список путей из архива
+                    local paths
+                    if [[ -f ./tar_manager ]]; then
+                        # shellcheck disable=SC2296
+                        paths=(${(f)"$(./tar_manager "$archive" _completion_files 2>/dev/null)"})
+                    else
+                        # shellcheck disable=SC2296
+                        paths=(${(f)"$(tar_manager "$archive" _completion_files 2>/dev/null)"})
+                    fi
+
+                    if [[ $command == "ls" ]]; then
+                        local dirs=()
+                        for path in $paths; do
+                            if [[ $path == */ ]] || ./tar_manager "$archive" _is_dir "$path" 2>/dev/null; then
+                                dirs+=($path)
+                            fi
+                        done
+                        _describe 'directory' dirs
+                    else
+                        _describe 'path' paths
+                    fi
+                    ;;
+            esac
+        fi
+        ;;
+    extra)
+        _files
+        ;;
+esac
